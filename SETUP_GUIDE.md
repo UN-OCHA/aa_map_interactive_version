@@ -209,20 +209,20 @@ Full UN Blue ramp for reference:
 
 ## 6. Automated Pipeline (GitHub Actions)
 
-A GitHub Actions workflow automatically keeps the Datawrapper map in sync with the Google Sheet.
+A GitHub Actions workflow automatically keeps the CSV in sync with the Google Sheet. Datawrapper reads from the raw GitHub CSV URL and auto-refreshes.
 
 ### How it works
 
 ```
 User edits Google Sheet
         ↓ (twice daily at 6:00 and 18:00 UTC, or manual trigger)
-GitHub Actions:
-  1. Fetches Google Sheet as CSV
-  2. Compares with existing aa_map_data.csv
-  3. If changed → commits CSV, pushes data to Datawrapper, republishes map
+GitHub Actions fetches Google Sheet → commits updated CSV to repo
         ↓
-Map auto-updates at https://www.datawrapper.de/_/8Kssm
+Datawrapper auto-refreshes from:
+https://raw.githubusercontent.com/UN-OCHA/aa_map_interactive_version/refs/heads/main/aa_map_data.csv
 ```
+
+No API tokens or manual republishing needed. Same approach as the INSARAG map.
 
 ### Schedule
 - Runs automatically **twice daily** (6:00 AM and 6:00 PM UTC)
@@ -230,18 +230,9 @@ Map auto-updates at https://www.datawrapper.de/_/8Kssm
 
 ### Manual trigger
 1. Go to https://github.com/UN-OCHA/aa_map_interactive_version/actions
-2. Click **"Sync Google Sheet to Datawrapper"** in the left sidebar
+2. Click **"Sync Google Sheet to CSV"** in the left sidebar
 3. Click **"Run workflow"** → Select `main` → Click **"Run workflow"**
 4. Wait ~30 seconds for the run to complete (green checkmark = success)
-
-### Required secret: `DATAWRAPPER_API_TOKEN`
-The workflow needs a Datawrapper API token to push data and republish the chart.
-
-**To create/regenerate the token:**
-1. Go to https://app.datawrapper.de/account/api-tokens
-2. Create a new token with scopes: `chart:read` and `chart:write`
-3. Go to https://github.com/UN-OCHA/aa_map_interactive_version/settings/secrets/actions
-4. Add (or update) a secret named `DATAWRAPPER_API_TOKEN` with the token value
 
 ### Checking if it's working
 - Go to the [Actions tab](https://github.com/UN-OCHA/aa_map_interactive_version/actions)
@@ -279,5 +270,5 @@ This is easier to maintain and still shows the framework status with the matchin
 - **Sheet not updating:** Make sure the sheet is published to web (File → Share → Publish to web) and set to auto-republish
 - **ISO column or Ref sheet missing:** These are hidden by design. Right-click on column headers or sheet tabs to unhide if needed for maintenance
 - **New crisis type needs icon:** Add the crisis name to the dropdown, then add a matching condition to the tooltip template in Datawrapper
-- **GitHub Actions failing:** Check the [Actions tab](https://github.com/UN-OCHA/aa_map_interactive_version/actions) for error logs. Common issues: expired Datawrapper API token (regenerate it), Google Sheet not published to web, or repository permissions
+- **GitHub Actions failing:** Check the [Actions tab](https://github.com/UN-OCHA/aa_map_interactive_version/actions) for error logs. Common issues: Google Sheet not published to web, or repository permissions
 - **Map not updating after Sheet edit:** Wait up to 12 hours for the next scheduled sync, or trigger a manual run from the Actions tab

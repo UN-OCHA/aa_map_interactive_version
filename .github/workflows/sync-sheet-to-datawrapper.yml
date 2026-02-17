@@ -1,14 +1,12 @@
-name: Sync Google Sheet to Datawrapper
+name: Sync Google Sheet to CSV
+concurrency:
+  group: aa-map-sheet-sync
+  cancel-in-progress: true
 
 on:
   schedule:
-    # Runs twice daily at 6:00 and 18:00 UTC
-    - cron: '0 6,18 * * *'
+    - cron: "0 6,18 * * *"   # updates twice per day
   workflow_dispatch:
-    # Allows manual triggering from the Actions tab
-
-permissions:
-  contents: write
 
 jobs:
   sync:
@@ -18,70 +16,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Fetch Google Sheet as CSV
-        run: |
-          curl -sL \
-            "https://docs.google.com/spreadsheets/d/13cRZ8XGvLTqLVytn3B24FOoKyWy7p3_tUNeVwZ86bx8/gviz/tq?tqx=out:csv&sheet=Map%20Data" \
-            -o aa_map_data_new.csv
+      - name: Download Google Sheet CSV
+        run: curl -L "https://docs.google.com/spreadsheets/d/13cRZ8XGvLTqLVytn3B24FOoKyWy7p3_tUNeVwZ86bx8/gviz/tq?tqx=out:csv&sheet=Map%20Data" -o aa_map_data.csv
 
-      - name: Normalize CSV formatting
+      - name: Commit and push if changed
         run: |
-          # Google's export wraps every field in double quotes.
-          # Our CSV uses minimal quoting. This normalizes the format
-          # so we only detect real data changes, not formatting diffs.
-          python3 -c "
-          import csv
-          with open('aa_map_data_new.csv', 'r') as f:
-              reader = csv.reader(f)
-              rows = list(reader)
-          with open('aa_map_data_new.csv', 'w', newline='') as f:
-              writer = csv.writer(f, quoting=csv.QUOTE_MINIMAL)
-              writer.writerows(rows)
-          "
-
-      - name: Check for changes
-        id: diff
-        run: |
-          if diff -q aa_map_data.csv aa_map_data_new.csv > /dev/null 2>&1; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "No changes detected."
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "Changes detected:"
-            diff aa_map_data.csv aa_map_data_new.csv || true
-          fi
-
-      - name: Update CSV file
-        if: steps.diff.outputs.changed == 'true'
-        run: mv aa_map_data_new.csv aa_map_data.csv
-
-      - name: Commit and push
-        if: steps.diff.outputs.changed == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
           git add aa_map_data.csv
-          git commit -m "Update map data from Google Sheet"
+          git diff --cached --quiet || git commit -m "Update dataset"
           git push
-
-      - name: Upload data to Datawrapper
-        if: steps.diff.outputs.changed == 'true'
-        run: |
-          curl -s --fail-with-body \
-            -X PUT \
-            -H "Authorization: Bearer ${{ secrets.DATAWRAPPER_API_TOKEN }}" \
-            -H "Content-Type: text/csv" \
-            --data-binary @aa_map_data.csv \
-            "https://api.datawrapper.de/v3/charts/8Kssm/data"
-
-      - name: Republish Datawrapper chart
-        if: steps.diff.outputs.changed == 'true'
-        run: |
-          curl -s --fail-with-body \
-            -X POST \
-            -H "Authorization: Bearer ${{ secrets.DATAWRAPPER_API_TOKEN }}" \
-            "https://api.datawrapper.de/v3/charts/8Kssm/publish"
-
-      - name: Clean up
-        if: steps.diff.outputs.changed == 'false'
-        run: rm -f aa_map_data_new.csv
