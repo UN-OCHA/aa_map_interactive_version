@@ -276,6 +276,10 @@ If the conditional icon mapping above is too complex, here's a simpler version t
 
 ---
 
+## Project Owner
+
+**Sofia Fiammenghi** — Associate Humanitarian Affairs Officer | Climate Innovation Section
+
 ## Maintained by
 
 **OCHA Brand and Design Unit (BDU)**
