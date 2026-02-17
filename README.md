@@ -1,14 +1,64 @@
-# OCHA Anticipatory Action Interactive Map — Datawrapper Setup Guide
+# OCHA Anticipatory Action Interactive Map
 
-## Overview
+Interactive choropleth map showing OCHA-facilitated anticipatory action frameworks worldwide. Built with [Datawrapper](https://www.datawrapper.de/) and powered by a Google Sheet for easy updates by non-technical users.
 
-**Approach:** Datawrapper Choropleth Map connected to a Google Sheet
-**Framework status** → country fill color (3 colors)
-**Crisis types with icons** → shown in tooltip on hover/click
+![Map Preview](preview_sample.jpg)
+
+**Live map:** [datawrapper.dwcdn.net/8Kssm](https://datawrapper.dwcdn.net/8Kssm/)
+**Destination page:** [unocha.org/anticipatory-action](https://www.unocha.org/anticipatory-action)
 
 ---
 
-## 1. Google Sheet Structure
+## How It Works
+
+```
+User edits Google Sheet (dropdowns only — no manual data entry)
+        |
+        v  (twice daily via GitHub Actions)
+CSV is fetched and committed to this repo
+        |
+        v
+Datawrapper auto-refreshes from the raw GitHub CSV
+```
+
+- **Country colors** show framework status (3 levels)
+- **Tooltips** show crisis types with [OCHA humanitarian icons](https://github.com/UN-OCHA/humanitarian-icons-2026)
+- **No manual republishing needed** — the pipeline handles everything
+
+---
+
+## Quick Links
+
+| Resource | Link |
+|----------|------|
+| Google Sheet (data source) | [Open Sheet](https://docs.google.com/spreadsheets/d/13cRZ8XGvLTqLVytn3B24FOoKyWy7p3_tUNeVwZ86bx8/edit) |
+| Datawrapper chart (editor) | [Open in Datawrapper](https://app.datawrapper.de/ocha/edit/8Kssm) |
+| Raw CSV (Datawrapper reads this) | [aa_map_data.csv](https://raw.githubusercontent.com/UN-OCHA/aa_map_interactive_version_BDU/refs/heads/main/aa_map_data.csv) |
+| GitHub Actions (automation) | [View runs](https://github.com/UN-OCHA/aa_map_interactive_version_BDU/actions) |
+| OCHA Humanitarian Icons | [UN-OCHA/humanitarian-icons-2026](https://github.com/UN-OCHA/humanitarian-icons-2026) |
+
+---
+
+## For Users: How to Update the Map
+
+Just edit the Google Sheet — everything else is automatic.
+
+1. Open the [Google Sheet](https://docs.google.com/spreadsheets/d/13cRZ8XGvLTqLVytn3B24FOoKyWy7p3_tUNeVwZ86bx8/edit)
+2. Go to the **Map Data** tab
+3. Use the **dropdowns** to add/edit countries, framework status, and crisis types
+4. The map updates automatically within 12 hours
+
+**To force an immediate update:**
+1. Go to [GitHub Actions](https://github.com/UN-OCHA/aa_map_interactive_version_BDU/actions) → **"Sync Google Sheet to CSV"** → **Run workflow**
+2. Or go to the Datawrapper chart and click **Republish**
+
+> See the **Instructions** tab in the Google Sheet for a visual step-by-step guide.
+
+---
+
+## Technical Setup Guide
+
+### 1. Google Sheet Structure
 
 **Sheet URL:** https://docs.google.com/spreadsheets/d/13cRZ8XGvLTqLVytn3B24FOoKyWy7p3_tUNeVwZ86bx8/edit
 
@@ -21,14 +71,14 @@
 | E | `Crisis_2` | Secondary crisis — **dropdown** (leave empty if none) | `Drought` |
 | F | `Crisis_3` | Third crisis — **dropdown** (leave empty if none) | |
 
-> **Note:** Column A (ISO) is hidden and auto-populated via VLOOKUP from a hidden "Ref" sheet. Users only need to select from dropdowns in columns B–F.
+> **Note:** Column A (ISO) is hidden and auto-populated via VLOOKUP from a hidden "Ref" sheet. Users only need to select from dropdowns in columns B-F.
 
-### Framework_Status values (dropdown, must be exact):
+#### Framework_Status values (dropdown, must be exact):
 - `Activated`
 - `Endorsed`
 - `In development`
 
-### Crisis type values (dropdown — all from OCHA "Disasters, hazards and crises" icon family):
+#### Crisis type values (dropdown):
 - `Cholera` → uses Bacteria icon
 - `Cold wave`
 - `Conflict`
@@ -58,34 +108,30 @@
 - `Violent wind`
 - `Volcano`
 
-### Important: Publish the Sheet
-Before connecting to Datawrapper, publish the Google Sheet:
+#### Publish the Sheet
+The Google Sheet must be published to web for the GitHub Action to fetch it:
 1. In Google Sheets: **File → Share → Publish to web**
 2. Select **Map Data** and **Comma-separated values (.csv)**
 3. Click **Publish**
-4. Copy the published URL — you'll need it in Datawrapper
-
-> **Note:** The sheet tab was renamed from "Sheet1" to "Map Data". Datawrapper connects by URL, so renaming is safe.
 
 ---
 
-## 2. Datawrapper Setup — Step by Step
+### 2. Datawrapper Configuration
 
-### Step 1: Create New Visualization
+#### Step 1: Create New Visualization
 1. Go to https://app.datawrapper.de
 2. Click **New Map** → **Choropleth Map**
 3. Select basemap: **World**
 
-### Step 2: Add Your Data
-1. Click **Connect Google Sheet**
-2. Paste your published Google Sheet CSV URL
-3. In the **Match** tab:
+#### Step 2: Add Your Data
+1. Link the external CSV URL: `https://raw.githubusercontent.com/UN-OCHA/aa_map_interactive_version_BDU/refs/heads/main/aa_map_data.csv`
+2. In the **Match** tab:
    - Select column `ISO` as the match key
    - Datawrapper should match it to **ISO-Codes**
    - Verify all 26 countries match (green checkmarks)
-4. Select `framework_status` as the **values** column
+3. Select `framework_status` as the **values** column
 
-### Step 3: Visualize — Colors
+#### Step 3: Visualize — Colors
 
 In the **Appearance** tab:
 
@@ -98,18 +144,18 @@ In the **Appearance** tab:
 
 These 3 blues are from the official OCHA UN Blue colour ramp: https://brand.unocha.org/document/281801#/colours/colours/colour-ramps
 
-### Step 4: Visualize — Tooltips
+#### Step 4: Visualize — Tooltips
 
 1. Scroll to **Tooltips** section in the Annotate tab
 2. Enable **Show tooltips**
 3. Click **Customize tooltips**
 
-#### Tooltip TITLE field:
+**Tooltip TITLE field:**
 ```
 <b style="font-size:15px">{{ country }}</b>
 ```
 
-#### Tooltip BODY field:
+**Tooltip BODY field:**
 ```
 <div style="margin:4px 0 6px 0;padding:4px 8px;border-radius:100px;display:inline-block;font-size:11px;color:#fff;background:{{ framework_status == 'Activated' ? '#004987' : framework_status == 'Endorsed' ? '#0074B7' : '#64BDEA' }}">{{ framework_status }}</div>
 <br>
@@ -120,30 +166,28 @@ These 3 blues are from the official OCHA UN Blue colour ramp: https://brand.unoc
 {{ crisis_3 ? CONCAT('<div style="margin-top:4px">', crisis_3 == 'Cholera' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Bacteria.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Cold wave' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Cold-wave.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Conflict' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Conflict.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Cyclone' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Cyclone.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Drought' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Drought.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Dry spells' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Drought.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Earthquake' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Earthquake.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Epidemic' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Epidemic.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Flood' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Flood.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Plague' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Locust-infestation.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Storm' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Storm.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Tropical cyclones' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Cyclone.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Tsunami' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Tsunami.svg" height="22" style="vertical-align:middle"> ' : '', crisis_3, '</div>') : '' }}
 ```
 
-> **Note:** The tooltip body maps each crisis type to its OCHA humanitarian icon. It covers the most commonly used crisis types. For less common types not listed above, the crisis name will display without an icon. Copy-paste the whole block — Datawrapper handles it fine.
+> **Note:** The tooltip body maps each crisis type to its OCHA humanitarian icon. For crisis types not listed above, the name displays without an icon. Copy-paste the whole block — Datawrapper handles it fine.
 
-### Step 5: Annotate
+#### Step 5: Annotate
 
 1. **Title:** `OCHA-facilitated anticipatory action portfolio`
 2. **Description:** (leave empty or add a subtitle)
-3. **Legend:**
-   - Make sure the color legend shows all 3 categories with labels:
-     - Activated, Endorsed, In development
+3. **Legend:** Make sure the color legend shows all 3 categories: Activated, Endorsed, In development
 4. **Map labels:** Optionally add labels for orientation (e.g., major oceans/regions)
 5. **Source:** `OCHA | Updated from Google Sheet`
 
-### Step 6: Publish & Embed
+#### Step 6: Publish & Embed
 
 1. Click **Publish** to generate the embed code
 2. Copy the **iframe embed code** or the **Datawrapper URL**
 3. In your Drupal site (unocha.org/anticipatory-action):
    - Use the Datawrapper embed module
    - Paste the embed code/URL
-4. The map will auto-update when the Google Sheet is edited (Datawrapper checks periodically, or you can set a refresh interval)
+4. The map auto-updates from the GitHub CSV — no manual republish needed
 
 ---
 
-## 3. Icon Mapping Reference
+### 3. Icon Mapping Reference
 
 | Crisis Type | Icon File | Note |
 |---|---|---|
@@ -173,7 +217,7 @@ All icons are from the "Disasters, hazards and crises" family: https://github.co
 
 ---
 
-## 4. Color Scheme (OCHA Brand — UN Blue Colour Ramp)
+### 4. Color Scheme (OCHA Brand — UN Blue Colour Ramp)
 
 Source: https://brand.unocha.org/document/281801#/colours/colours/colour-ramps
 
@@ -182,73 +226,32 @@ Source: https://brand.unocha.org/document/281801#/colours/colours/colour-ramps
 | Activated | `#004987` | Step 2 (dark) | Dark blue |
 | Endorsed | `#0074B7` | Step 3 (medium) | Medium blue |
 | In development | `#64BDEA` | Step 5 (light) | Light blue |
-| No data | `#E6E6E6` | — | Light gray |
+| No data | `#E6E6E6` | -- | Light gray |
 
 Full UN Blue ramp for reference:
-`#002E6E` → `#004987` → `#0074B7` → `#009EDB` (primary) → `#64BDEA` → `#C5DFEF` → `#E3EDF6`
+`#002E6E` -> `#004987` -> `#0074B7` -> `#009EDB` (primary) -> `#64BDEA` -> `#C5DFEF` -> `#E3EDF6`
 
 ---
 
-## 5. How to Update the Map
+### 5. Automated Pipeline (GitHub Actions)
 
-**For regular users — just edit the Google Sheet:**
+A GitHub Actions workflow keeps the CSV in sync with the Google Sheet. Datawrapper reads from the raw GitHub CSV URL and auto-refreshes. Same approach as the [INSARAG map](https://github.com/UN-OCHA/insarag_exercises_datawrapper_BDU).
 
-1. Open the Google Sheet
-2. To add a country: add a new row, select the country from the **dropdown** in column B (ISO code auto-fills via VLOOKUP)
-3. To change a framework status: select from the **dropdown** in column C
-4. To add/remove a crisis: select from the **dropdown** in columns D/E/F
-5. The Datawrapper map updates automatically within 12 hours via a GitHub Actions pipeline. **No manual republishing is needed.**
+**Schedule:** Twice daily (6:00 AM and 6:00 PM UTC) + manual trigger
 
-> **Note:** The ISO column (A) is hidden and auto-generated. The Ref sheet with country-ISO lookup data is also hidden. Do not unhide or edit these.
-
-**To force an immediate update:**
-1. Go to [GitHub Actions](https://github.com/UN-OCHA/aa_map_interactive_version_BDU/actions) → "Sync Google Sheet to Datawrapper" → **Run workflow**
-2. Alternatively, go to the Datawrapper chart and click **Republish**
-
----
-
-## 6. Automated Pipeline (GitHub Actions)
-
-A GitHub Actions workflow automatically keeps the CSV in sync with the Google Sheet. Datawrapper reads from the raw GitHub CSV URL and auto-refreshes.
-
-### How it works
-
-```
-User edits Google Sheet
-        ↓ (twice daily at 6:00 and 18:00 UTC, or manual trigger)
-GitHub Actions fetches Google Sheet → commits updated CSV to repo
-        ↓
-Datawrapper auto-refreshes from:
-https://raw.githubusercontent.com/UN-OCHA/aa_map_interactive_version_BDU/refs/heads/main/aa_map_data.csv
-```
-
-No API tokens or manual republishing needed. Same approach as the INSARAG map.
-
-### Schedule
-- Runs automatically **twice daily** (6:00 AM and 6:00 PM UTC)
-- Can be triggered manually anytime from the [Actions tab](https://github.com/UN-OCHA/aa_map_interactive_version_BDU/actions)
-
-### Manual trigger
+**Manual trigger:**
 1. Go to https://github.com/UN-OCHA/aa_map_interactive_version_BDU/actions
 2. Click **"Sync Google Sheet to CSV"** in the left sidebar
 3. Click **"Run workflow"** → Select `main` → Click **"Run workflow"**
-4. Wait ~30 seconds for the run to complete (green checkmark = success)
 
-### Checking if it's working
-- Go to the [Actions tab](https://github.com/UN-OCHA/aa_map_interactive_version_BDU/actions)
-- Green ✅ = successful run (data may or may not have changed)
-- Red ❌ = something failed (check the logs for details)
-
-### Workflow file
-Located at: `.github/workflows/sync-sheet-to-datawrapper.yml`
+**Workflow file:** `.github/workflows/sync-sheet-to-datawrapper.yml`
 
 ---
 
-## 7. Simpler Tooltip Alternative
+### 6. Simpler Tooltip Alternative
 
 If the conditional icon mapping above is too complex, here's a simpler version that shows crisis names without icons:
 
-#### Simple Tooltip BODY:
 ```
 <div style="margin:4px 0 6px 0;padding:4px 8px;border-radius:100px;display:inline-block;font-size:11px;color:#fff;background:{{ framework_status == 'Activated' ? '#004987' : framework_status == 'Endorsed' ? '#0074B7' : '#64BDEA' }}">{{ framework_status }}</div>
 <br>
@@ -258,17 +261,23 @@ If the conditional icon mapping above is too complex, here's a simpler version t
 {{ crisis_3 ? CONCAT('<div>', crisis_3, '</div>') : '' }}
 ```
 
-This is easier to maintain and still shows the framework status with the matching color badge.
+---
+
+### 7. Troubleshooting
+
+- **Countries not matching:** Check that the country name in the Ref sheet matches what Datawrapper expects. The ISO code is auto-generated from the country name via VLOOKUP.
+- **Icons not showing in tooltip:** The crisis name must match one of the values in the tooltip template (case-sensitive). Use the dropdown to ensure correct values.
+- **Colors wrong:** Ensure `Framework_Status` values are exactly `Activated`, `Endorsed`, or `In development` (use dropdown).
+- **Sheet not updating:** Make sure the sheet is published to web (File → Share → Publish to web).
+- **ISO column or Ref sheet missing:** These are hidden by design. Right-click on column headers or sheet tabs to unhide if needed for maintenance.
+- **New crisis type needs icon:** Add the crisis name to the dropdown, then add a matching condition to the tooltip template in Datawrapper.
+- **GitHub Actions failing:** Check the [Actions tab](https://github.com/UN-OCHA/aa_map_interactive_version_BDU/actions) for error logs. Common issues: Google Sheet not published to web, or repository permissions.
+- **Map not updating after Sheet edit:** Wait up to 12 hours for the next scheduled sync, or trigger a manual run from the Actions tab.
 
 ---
 
-## 8. Troubleshooting
+## Maintained by
 
-- **Countries not matching:** The ISO code is auto-generated from the country name via VLOOKUP. If a country isn't matching in Datawrapper, check that the country name in the Ref sheet matches what Datawrapper expects
-- **Icons not showing in tooltip:** The crisis name must match one of the values in the tooltip template (case-sensitive). Use the dropdown to ensure correct values
-- **Colors wrong:** Ensure `Framework_Status` values are exactly `Activated`, `Endorsed`, or `In development` (use dropdown)
-- **Sheet not updating:** Make sure the sheet is published to web (File → Share → Publish to web) and set to auto-republish
-- **ISO column or Ref sheet missing:** These are hidden by design. Right-click on column headers or sheet tabs to unhide if needed for maintenance
-- **New crisis type needs icon:** Add the crisis name to the dropdown, then add a matching condition to the tooltip template in Datawrapper
-- **GitHub Actions failing:** Check the [Actions tab](https://github.com/UN-OCHA/aa_map_interactive_version_BDU/actions) for error logs. Common issues: Google Sheet not published to web, or repository permissions
-- **Map not updating after Sheet edit:** Wait up to 12 hours for the next scheduled sync, or trigger a manual run from the Actions tab
+**OCHA Brand and Design Unit (BDU)**
+- Team: ochavisual@un.org
+- Focal point: Javier Cueto (cuetoj@un.org)
