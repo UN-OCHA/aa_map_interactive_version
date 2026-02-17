@@ -202,7 +202,7 @@ Full UN Blue ramp for reference:
 > **Note:** The ISO column (A) is hidden and auto-generated. The Ref sheet with country-ISO lookup data is also hidden. Do not unhide or edit these.
 
 **To force an immediate update:**
-1. Go to [GitHub Actions](https://github.com/UN-OCHA/aa_map_interactive_version/actions) → "Sync Google Sheet to Datawrapper" → **Run workflow**
+1. Go to [GitHub Actions](https://github.com/UN-OCHA/aa_map_interactive_version_BDU/actions) → "Sync Google Sheet to Datawrapper" → **Run workflow**
 2. Alternatively, go to the Datawrapper chart and click **Republish**
 
 ---
@@ -219,23 +219,23 @@ User edits Google Sheet
 GitHub Actions fetches Google Sheet → commits updated CSV to repo
         ↓
 Datawrapper auto-refreshes from:
-https://raw.githubusercontent.com/UN-OCHA/aa_map_interactive_version/refs/heads/main/aa_map_data.csv
+https://raw.githubusercontent.com/UN-OCHA/aa_map_interactive_version_BDU/refs/heads/main/aa_map_data.csv
 ```
 
 No API tokens or manual republishing needed. Same approach as the INSARAG map.
 
 ### Schedule
 - Runs automatically **twice daily** (6:00 AM and 6:00 PM UTC)
-- Can be triggered manually anytime from the [Actions tab](https://github.com/UN-OCHA/aa_map_interactive_version/actions)
+- Can be triggered manually anytime from the [Actions tab](https://github.com/UN-OCHA/aa_map_interactive_version_BDU/actions)
 
 ### Manual trigger
-1. Go to https://github.com/UN-OCHA/aa_map_interactive_version/actions
+1. Go to https://github.com/UN-OCHA/aa_map_interactive_version_BDU/actions
 2. Click **"Sync Google Sheet to CSV"** in the left sidebar
 3. Click **"Run workflow"** → Select `main` → Click **"Run workflow"**
 4. Wait ~30 seconds for the run to complete (green checkmark = success)
 
 ### Checking if it's working
-- Go to the [Actions tab](https://github.com/UN-OCHA/aa_map_interactive_version/actions)
+- Go to the [Actions tab](https://github.com/UN-OCHA/aa_map_interactive_version_BDU/actions)
 - Green ✅ = successful run (data may or may not have changed)
 - Red ❌ = something failed (check the logs for details)
 
@@ -270,5 +270,5 @@ This is easier to maintain and still shows the framework status with the matchin
 - **Sheet not updating:** Make sure the sheet is published to web (File → Share → Publish to web) and set to auto-republish
 - **ISO column or Ref sheet missing:** These are hidden by design. Right-click on column headers or sheet tabs to unhide if needed for maintenance
 - **New crisis type needs icon:** Add the crisis name to the dropdown, then add a matching condition to the tooltip template in Datawrapper
-- **GitHub Actions failing:** Check the [Actions tab](https://github.com/UN-OCHA/aa_map_interactive_version/actions) for error logs. Common issues: Google Sheet not published to web, or repository permissions
+- **GitHub Actions failing:** Check the [Actions tab](https://github.com/UN-OCHA/aa_map_interactive_version_BDU/actions) for error logs. Common issues: Google Sheet not published to web, or repository permissions
 - **Map not updating after Sheet edit:** Wait up to 12 hours for the next scheduled sync, or trigger a manual run from the Actions tab
