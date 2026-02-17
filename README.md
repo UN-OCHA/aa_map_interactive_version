@@ -228,8 +228,6 @@ Source: https://brand.unocha.org/document/281801#/colours/colours/colour-ramps
 | In development | `#64BDEA` | Step 5 (light) | Light blue |
 | No data | `#E6E6E6` | -- | Light gray |
 
-Full UN Blue ramp for reference:
-`#002E6E` -> `#004987` -> `#0074B7` -> `#009EDB` (primary) -> `#64BDEA` -> `#C5DFEF` -> `#E3EDF6`
 
 ---
 
