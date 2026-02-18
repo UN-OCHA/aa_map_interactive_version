@@ -21,7 +21,7 @@ CSV is fetched and committed to this repo
 Datawrapper auto-refreshes from the raw GitHub CSV
 ```
 
-- **Country colors** show the primary framework status (3 levels based on Status_1)
+- **Country colors** show the framework status via `Map_Color` column (Activated, Endorsed, In development, or Mixed statuses)
 - **Tooltips** show each crisis with its own status badge and [OCHA humanitarian icon](https://github.com/UN-OCHA/humanitarian-icons-2026)
 - **No manual republishing needed** — the pipeline handles everything
 
@@ -72,8 +72,9 @@ Just edit the Google Sheet — everything else is automatic.
 | F | `Status_2` | Framework status for Crisis_2 — **dropdown** | `Endorsed` |
 | G | `Crisis_3` | Third crisis — **dropdown** (leave empty if none) | |
 | H | `Status_3` | Framework status for Crisis_3 — **dropdown** | |
+| I | `Map_Color` | Auto-calculated — drives choropleth color (hidden) | `Activated` or `Mixed statuses` |
 
-> **Note:** Column A (ISO) is hidden and auto-populated via VLOOKUP from a hidden "Ref" sheet. Users only need to select from dropdowns in columns B-H. Each crisis has its own independent framework status — a country can have different statuses for different crises.
+> **Note:** Column A (ISO) and Column I (Map_Color) are hidden. Column A is auto-populated via VLOOKUP from a hidden "Ref" sheet. Column I uses a formula to determine the choropleth color: if all crises share one status, it shows that status; if a country has crises with different statuses, it shows "Mixed statuses". Users only need to select from dropdowns in columns B-H.
 
 #### Status values (dropdown, must be exact):
 - `Activated`
@@ -131,17 +132,18 @@ The Google Sheet must be published to web for the GitHub Action to fetch it:
    - Select column `ISO` as the match key
    - Datawrapper should match it to **ISO-Codes**
    - Verify all 26 countries match (green checkmarks)
-3. Select `Status_1` as the **values** column (this drives the choropleth color)
+3. Select `Map_Color` as the **values** column (this drives the choropleth color)
 
 #### Step 3: Visualize — Colors
 
 In the **Appearance** tab:
 
 1. **Color scale:** Select **Categories** (not continuous)
-2. You should see 3 categories auto-detected:
+2. You should see 4 categories auto-detected:
    - `Activated` → **#004987** (dark blue — UN Blue ramp step 2)
    - `Endorsed` → **#0074B7** (medium blue — UN Blue ramp step 3)
    - `In development` → **#64BDEA** (light blue — UN Blue ramp step 5)
+   - `Mixed statuses` → assign a color or pattern for countries with multiple different statuses
 3. Set countries without data to **#E6E6E6** (light gray)
 
 These 3 blues are from the official OCHA UN Blue colour ramp: https://brand.unocha.org/document/281801#/colours/colours/colour-ramps
@@ -159,23 +161,33 @@ These 3 blues are from the official OCHA UN Blue colour ramp: https://brand.unoc
 
 **Tooltip BODY field:**
 
-Each crisis line shows an OCHA humanitarian icon + the crisis name + a color-coded status badge. Crisis_2 and Crisis_3 only appear if they have a value.
+Each crisis line shows a **color-tinted** OCHA humanitarian icon (matching the status color) + the crisis name + a color-coded status badge. Crisis_2 and Crisis_3 only appear if they have a value.
 
+The icons use the **CSS mask technique** — a `<div>` with `background-color` set to the status color and `-webkit-mask-image`/`mask-image` pointing to the SVG URL. This renders the SVG shape filled with the status color. (Note: the CSS `filter:` approach does NOT work in Datawrapper because the colon triggers the ternary parser.)
+
+The full template is ~6800 characters. Due to its length, it's best to copy it directly from the Datawrapper tooltip editor (chart `8Kssm`). The structure is:
+
+- **Line 1** (always shown): `<div>` with mask-image icon (URL from crisis_1 ternary) + background-color (from status_1 ternary) + crisis name + status pill
+- **Line 2** (conditional): `{{ crisis_2 ? CONCAT(...) : '' }}` — same pattern using CONCAT with inline ternaries for icon URL and color
+- **Line 3** (conditional): `{{ crisis_3 ? CONCAT(...) : '' }}` — same pattern
+
+**Icon URL ternary pattern** (used inside mask-image):
 ```
-<div style="margin-top:4px">
-{{ crisis_1 == 'Cholera' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Bacteria.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Drought' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Drought.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Dry spells' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Drought.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Flash flood' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Flash-flood.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Floods' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Flood.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Plague' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Locust-infestation.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Tropical cyclones' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Cyclone.svg" height="22" style="vertical-align:middle"> ' : '' }}{{ crisis_1 }} <span style="padding:2px 6px;border-radius:100px;font-size:10px;color:#fff;background:{{ status_1 == 'Activated' ? '#004987' : status_1 == 'Endorsed' ? '#0074B7' : '#64BDEA' }}">{{ status_1 }}</span>
-</div>
-{{ crisis_2 ? CONCAT('<div style="margin-top:4px">', crisis_2 == 'Cholera' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Bacteria.svg" height="22" style="vertical-align:middle"> ' : crisis_2 == 'Drought' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Drought.svg" height="22" style="vertical-align:middle"> ' : crisis_2 == 'Dry spells' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Drought.svg" height="22" style="vertical-align:middle"> ' : crisis_2 == 'Flash flood' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Flash-flood.svg" height="22" style="vertical-align:middle"> ' : crisis_2 == 'Floods' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Flood.svg" height="22" style="vertical-align:middle"> ' : crisis_2 == 'Plague' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Locust-infestation.svg" height="22" style="vertical-align:middle"> ' : crisis_2 == 'Tropical cyclones' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Cyclone.svg" height="22" style="vertical-align:middle"> ' : '', crisis_2, ' <span style="padding:2px 6px;border-radius:100px;font-size:10px;color:#fff;background:', status_2 == 'Activated' ? '#004987' : status_2 == 'Endorsed' ? '#0074B7' : '#64BDEA', '">', status_2, '</span></div>') : '' }}
-{{ crisis_3 ? CONCAT('<div style="margin-top:4px">', crisis_3 == 'Cholera' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Bacteria.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Drought' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Drought.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Dry spells' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Drought.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Flash flood' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Flash-flood.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Floods' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Flood.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Plague' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Locust-infestation.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Tropical cyclones' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Cyclone.svg" height="22" style="vertical-align:middle"> ' : '', crisis_3, ' <span style="padding:2px 6px;border-radius:100px;font-size:10px;color:#fff;background:', status_3 == 'Activated' ? '#004987' : status_3 == 'Endorsed' ? '#0074B7' : '#64BDEA', '">', status_3, '</span></div>') : '' }}
+{{ crisis_1 == 'Cholera' ? '.../Bacteria.svg' : crisis_1 == 'Drought' ? '.../Drought.svg' : ... }}
 ```
 
-> **Note:** Each crisis line shows an icon + name + a color-coded status pill. The tooltip uses `status_1`, `status_2`, `status_3` (per-crisis) — not a single framework status. For crisis types not listed above, the name displays without an icon. Copy-paste the whole block — Datawrapper handles it fine.
+**Color ternary pattern** (used in background-color and pill background):
+```
+{{ status_1 == 'Activated' ? '#004987' : status_1 == 'Endorsed' ? '#0074B7' : '#64BDEA' }}
+```
+
+> **Note:** Each crisis line shows a color-tinted icon + name + a color-coded status pill. The tooltip uses `status_1`, `status_2`, `status_3` (per-crisis) — not a single framework status. For crisis types not in the ternary, the icon div will be empty but the name and badge still display.
 
 #### Step 5: Annotate
 
 1. **Title:** `OCHA-facilitated anticipatory action portfolio`
 2. **Description:** (leave empty or add a subtitle)
-3. **Legend:** Make sure the color legend shows all 3 categories: Activated, Endorsed, In development
+3. **Legend:** Make sure the color legend shows all 4 categories: Activated, Endorsed, In development, Mixed statuses
 4. **Map labels:** Optionally add labels for orientation (e.g., major oceans/regions)
 5. **Source:** `OCHA | Updated from Google Sheet`
 
@@ -229,6 +241,7 @@ Source: https://brand.unocha.org/document/281801#/colours/colours/colour-ramps
 | Activated | `#004987` | Step 2 (dark) | Dark blue |
 | Endorsed | `#0074B7` | Step 3 (medium) | Medium blue |
 | In development | `#64BDEA` | Step 5 (light) | Light blue |
+| Mixed statuses | *(user-assigned)* | -- | Countries with multiple different statuses |
 | No data | `#E6E6E6` | -- | Light gray |
 
 
@@ -251,7 +264,7 @@ A GitHub Actions workflow keeps the CSV in sync with the Google Sheet. Datawrapp
 
 ### 6. Simpler Tooltip Alternative
 
-If the conditional icon mapping above is too complex, here's a simpler version that shows crisis names with status badges but without icons:
+If the CSS mask icon approach above is too complex, here's a simpler version that shows crisis names with status badges but without icons:
 
 ```
 <div style="margin-top:4px">{{ crisis_1 }} <span style="padding:2px 6px;border-radius:100px;font-size:10px;color:#fff;background:{{ status_1 == 'Activated' ? '#004987' : status_1 == 'Endorsed' ? '#0074B7' : '#64BDEA' }}">{{ status_1 }}</span></div>
@@ -265,7 +278,7 @@ If the conditional icon mapping above is too complex, here's a simpler version t
 
 - **Countries not matching:** Check that the country name in the Ref sheet matches what Datawrapper expects. The ISO code is auto-generated from the country name via VLOOKUP.
 - **Icons not showing in tooltip:** The crisis name must match one of the values in the tooltip template (case-sensitive). Use the dropdown to ensure correct values.
-- **Colors wrong:** Ensure status values are exactly `Activated`, `Endorsed`, or `In development` (use dropdown). The map color is driven by `Status_1`.
+- **Colors wrong:** Ensure status values are exactly `Activated`, `Endorsed`, or `In development` (use dropdown). The map color is driven by the `Map_Color` column (auto-calculated, hidden column I).
 - **Sheet not updating:** Make sure the sheet is published to web (File → Share → Publish to web).
 - **ISO column or Ref sheet missing:** These are hidden by design. Right-click on column headers or sheet tabs to unhide if needed for maintenance.
 - **New crisis type needs icon:** Add the crisis name to the dropdown, then add a matching condition to the tooltip template in Datawrapper.
