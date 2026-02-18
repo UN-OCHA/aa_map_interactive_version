@@ -21,8 +21,8 @@ CSV is fetched and committed to this repo
 Datawrapper auto-refreshes from the raw GitHub CSV
 ```
 
-- **Country colors** show framework status (3 levels)
-- **Tooltips** show crisis types with [OCHA humanitarian icons](https://github.com/UN-OCHA/humanitarian-icons-2026)
+- **Country colors** show the primary framework status (3 levels based on Status_1)
+- **Tooltips** show each crisis with its own status badge and [OCHA humanitarian icon](https://github.com/UN-OCHA/humanitarian-icons-2026)
 - **No manual republishing needed** — the pipeline handles everything
 
 ---
@@ -45,7 +45,7 @@ Just edit the Google Sheet — everything else is automatic.
 
 1. Open the [Google Sheet](https://docs.google.com/spreadsheets/d/13cRZ8XGvLTqLVytn3B24FOoKyWy7p3_tUNeVwZ86bx8/edit)
 2. Go to the **Map Data** tab
-3. Use the **dropdowns** to add/edit countries, framework status, and crisis types
+3. Use the **dropdowns** to add/edit countries, crisis types, and their framework statuses
 4. The map updates automatically within 12 hours
 
 **To force an immediate update:**
@@ -66,14 +66,16 @@ Just edit the Google Sheet — everything else is automatic.
 |--------|--------|---------|---------|
 | A | `ISO` | ISO 3166-1 Alpha-3 code (auto-generated, hidden) | `ETH` |
 | B | `Country` | Country name — **dropdown** from reference list | `Ethiopia` |
-| C | `Framework_Status` | One of 3 values — **dropdown**, drives choropleth color | `Activated` |
-| D | `Crisis_1` | Primary crisis type — **dropdown** | `Flood` |
-| E | `Crisis_2` | Secondary crisis — **dropdown** (leave empty if none) | `Drought` |
-| F | `Crisis_3` | Third crisis — **dropdown** (leave empty if none) | |
+| C | `Crisis_1` | Primary crisis type — **dropdown** | `Drought` |
+| D | `Status_1` | Framework status for Crisis_1 — **dropdown** | `Activated` |
+| E | `Crisis_2` | Secondary crisis — **dropdown** (leave empty if none) | `Floods` |
+| F | `Status_2` | Framework status for Crisis_2 — **dropdown** | `Endorsed` |
+| G | `Crisis_3` | Third crisis — **dropdown** (leave empty if none) | |
+| H | `Status_3` | Framework status for Crisis_3 — **dropdown** | |
 
-> **Note:** Column A (ISO) is hidden and auto-populated via VLOOKUP from a hidden "Ref" sheet. Users only need to select from dropdowns in columns B-F.
+> **Note:** Column A (ISO) is hidden and auto-populated via VLOOKUP from a hidden "Ref" sheet. Users only need to select from dropdowns in columns B-H. Each crisis has its own independent framework status — a country can have different statuses for different crises.
 
-#### Framework_Status values (dropdown, must be exact):
+#### Status values (dropdown, must be exact):
 - `Activated`
 - `Endorsed`
 - `In development`
@@ -90,7 +92,7 @@ Just edit the Google Sheet — everything else is automatic.
 - `Famine`
 - `Fire`
 - `Flash flood`
-- `Flood`
+- `Floods`
 - `Heatwave`
 - `Heavy rain`
 - `Insect infestation`
@@ -129,7 +131,7 @@ The Google Sheet must be published to web for the GitHub Action to fetch it:
    - Select column `ISO` as the match key
    - Datawrapper should match it to **ISO-Codes**
    - Verify all 26 countries match (green checkmarks)
-3. Select `framework_status` as the **values** column
+3. Select `Status_1` as the **values** column (this drives the choropleth color)
 
 #### Step 3: Visualize — Colors
 
@@ -156,17 +158,18 @@ These 3 blues are from the official OCHA UN Blue colour ramp: https://brand.unoc
 ```
 
 **Tooltip BODY field:**
+
+Each crisis line shows an OCHA humanitarian icon + the crisis name + a color-coded status badge. Crisis_2 and Crisis_3 only appear if they have a value.
+
 ```
-<div style="margin:4px 0 6px 0;padding:4px 8px;border-radius:100px;display:inline-block;font-size:11px;color:#fff;background:{{ framework_status == 'Activated' ? '#004987' : framework_status == 'Endorsed' ? '#0074B7' : '#64BDEA' }}">{{ framework_status }}</div>
-<br>
-<div style="margin-top:6px">
-{{ crisis_1 == 'Cholera' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Bacteria.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Cold wave' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Cold-wave.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Conflict' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Conflict.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Cyclone' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Cyclone.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Drought' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Drought.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Dry spells' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Drought.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Earthquake' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Earthquake.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Epidemic' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Epidemic.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Famine' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Famine.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Fire' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Fire.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Flash flood' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Flash-flood.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Flood' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Flood.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Heatwave' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Heatwave.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Heavy rain' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Heavy-rain.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Plague' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Locust-infestation.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Storm' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Storm.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Tropical cyclones' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Cyclone.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Tsunami' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Tsunami.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Volcano' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Volcano.svg" height="22" style="vertical-align:middle"> ' : '' }}{{ crisis_1 }}
+<div style="margin-top:4px">
+{{ crisis_1 == 'Cholera' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Bacteria.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Drought' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Drought.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Dry spells' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Drought.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Flash flood' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Flash-flood.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Floods' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Flood.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Plague' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Locust-infestation.svg" height="22" style="vertical-align:middle"> ' : crisis_1 == 'Tropical cyclones' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Cyclone.svg" height="22" style="vertical-align:middle"> ' : '' }}{{ crisis_1 }} <span style="padding:2px 6px;border-radius:100px;font-size:10px;color:#fff;background:{{ status_1 == 'Activated' ? '#004987' : status_1 == 'Endorsed' ? '#0074B7' : '#64BDEA' }}">{{ status_1 }}</span>
 </div>
-{{ crisis_2 ? CONCAT('<div style="margin-top:4px">', crisis_2 == 'Cholera' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Bacteria.svg" height="22" style="vertical-align:middle"> ' : crisis_2 == 'Cold wave' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Cold-wave.svg" height="22" style="vertical-align:middle"> ' : crisis_2 == 'Conflict' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Conflict.svg" height="22" style="vertical-align:middle"> ' : crisis_2 == 'Cyclone' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Cyclone.svg" height="22" style="vertical-align:middle"> ' : crisis_2 == 'Drought' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Drought.svg" height="22" style="vertical-align:middle"> ' : crisis_2 == 'Dry spells' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Drought.svg" height="22" style="vertical-align:middle"> ' : crisis_2 == 'Earthquake' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Earthquake.svg" height="22" style="vertical-align:middle"> ' : crisis_2 == 'Epidemic' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Epidemic.svg" height="22" style="vertical-align:middle"> ' : crisis_2 == 'Flood' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Flood.svg" height="22" style="vertical-align:middle"> ' : crisis_2 == 'Plague' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Locust-infestation.svg" height="22" style="vertical-align:middle"> ' : crisis_2 == 'Storm' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Storm.svg" height="22" style="vertical-align:middle"> ' : crisis_2 == 'Tropical cyclones' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Cyclone.svg" height="22" style="vertical-align:middle"> ' : crisis_2 == 'Tsunami' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Tsunami.svg" height="22" style="vertical-align:middle"> ' : '', crisis_2, '</div>') : '' }}
-{{ crisis_3 ? CONCAT('<div style="margin-top:4px">', crisis_3 == 'Cholera' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Bacteria.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Cold wave' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Cold-wave.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Conflict' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Conflict.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Cyclone' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Cyclone.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Drought' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Drought.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Dry spells' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Drought.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Earthquake' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Earthquake.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Epidemic' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Epidemic.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Flood' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Flood.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Plague' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Locust-infestation.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Storm' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Storm.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Tropical cyclones' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Cyclone.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Tsunami' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Tsunami.svg" height="22" style="vertical-align:middle"> ' : '', crisis_3, '</div>') : '' }}
+{{ crisis_2 ? CONCAT('<div style="margin-top:4px">', crisis_2 == 'Cholera' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Bacteria.svg" height="22" style="vertical-align:middle"> ' : crisis_2 == 'Drought' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Drought.svg" height="22" style="vertical-align:middle"> ' : crisis_2 == 'Dry spells' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Drought.svg" height="22" style="vertical-align:middle"> ' : crisis_2 == 'Flash flood' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Flash-flood.svg" height="22" style="vertical-align:middle"> ' : crisis_2 == 'Floods' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Flood.svg" height="22" style="vertical-align:middle"> ' : crisis_2 == 'Plague' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Locust-infestation.svg" height="22" style="vertical-align:middle"> ' : crisis_2 == 'Tropical cyclones' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Cyclone.svg" height="22" style="vertical-align:middle"> ' : '', crisis_2, ' <span style="padding:2px 6px;border-radius:100px;font-size:10px;color:#fff;background:', status_2 == 'Activated' ? '#004987' : status_2 == 'Endorsed' ? '#0074B7' : '#64BDEA', '">', status_2, '</span></div>') : '' }}
+{{ crisis_3 ? CONCAT('<div style="margin-top:4px">', crisis_3 == 'Cholera' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Bacteria.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Drought' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Drought.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Dry spells' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Drought.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Flash flood' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Flash-flood.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Floods' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Flood.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Plague' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Locust-infestation.svg" height="22" style="vertical-align:middle"> ' : crisis_3 == 'Tropical cyclones' ? '<img src="https://raw.githubusercontent.com/UN-OCHA/humanitarian-icons-2026/main/svg/Cyclone.svg" height="22" style="vertical-align:middle"> ' : '', crisis_3, ' <span style="padding:2px 6px;border-radius:100px;font-size:10px;color:#fff;background:', status_3 == 'Activated' ? '#004987' : status_3 == 'Endorsed' ? '#0074B7' : '#64BDEA', '">', status_3, '</span></div>') : '' }}
 ```
 
-> **Note:** The tooltip body maps each crisis type to its OCHA humanitarian icon. For crisis types not listed above, the name displays without an icon. Copy-paste the whole block — Datawrapper handles it fine.
+> **Note:** Each crisis line shows an icon + name + a color-coded status pill. The tooltip uses `status_1`, `status_2`, `status_3` (per-crisis) — not a single framework status. For crisis types not listed above, the name displays without an icon. Copy-paste the whole block — Datawrapper handles it fine.
 
 #### Step 5: Annotate
 
@@ -202,7 +205,7 @@ These 3 blues are from the official OCHA UN Blue colour ramp: https://brand.unoc
 | Famine | `Famine.svg` | |
 | Fire | `Fire.svg` | |
 | Flash flood | `Flash-flood.svg` | |
-| Flood | `Flood.svg` | |
+| Floods | `Flood.svg` | Icon file is singular, crisis name is plural |
 | Heatwave | `Heatwave.svg` | |
 | Heavy rain | `Heavy-rain.svg` | |
 | Plague | `Locust-infestation.svg` | Maps to locust infestation icon |
@@ -248,15 +251,12 @@ A GitHub Actions workflow keeps the CSV in sync with the Google Sheet. Datawrapp
 
 ### 6. Simpler Tooltip Alternative
 
-If the conditional icon mapping above is too complex, here's a simpler version that shows crisis names without icons:
+If the conditional icon mapping above is too complex, here's a simpler version that shows crisis names with status badges but without icons:
 
 ```
-<div style="margin:4px 0 6px 0;padding:4px 8px;border-radius:100px;display:inline-block;font-size:11px;color:#fff;background:{{ framework_status == 'Activated' ? '#004987' : framework_status == 'Endorsed' ? '#0074B7' : '#64BDEA' }}">{{ framework_status }}</div>
-<br>
-<div style="margin-top:6px"><b>Hazards:</b></div>
-<div>{{ crisis_1 }}</div>
-{{ crisis_2 ? CONCAT('<div>', crisis_2, '</div>') : '' }}
-{{ crisis_3 ? CONCAT('<div>', crisis_3, '</div>') : '' }}
+<div style="margin-top:4px">{{ crisis_1 }} <span style="padding:2px 6px;border-radius:100px;font-size:10px;color:#fff;background:{{ status_1 == 'Activated' ? '#004987' : status_1 == 'Endorsed' ? '#0074B7' : '#64BDEA' }}">{{ status_1 }}</span></div>
+{{ crisis_2 ? CONCAT('<div style="margin-top:4px">', crisis_2, ' <span style="padding:2px 6px;border-radius:100px;font-size:10px;color:#fff;background:', status_2 == 'Activated' ? '#004987' : status_2 == 'Endorsed' ? '#0074B7' : '#64BDEA', '">', status_2, '</span></div>') : '' }}
+{{ crisis_3 ? CONCAT('<div style="margin-top:4px">', crisis_3, ' <span style="padding:2px 6px;border-radius:100px;font-size:10px;color:#fff;background:', status_3 == 'Activated' ? '#004987' : status_3 == 'Endorsed' ? '#0074B7' : '#64BDEA', '">', status_3, '</span></div>') : '' }}
 ```
 
 ---
@@ -265,7 +265,7 @@ If the conditional icon mapping above is too complex, here's a simpler version t
 
 - **Countries not matching:** Check that the country name in the Ref sheet matches what Datawrapper expects. The ISO code is auto-generated from the country name via VLOOKUP.
 - **Icons not showing in tooltip:** The crisis name must match one of the values in the tooltip template (case-sensitive). Use the dropdown to ensure correct values.
-- **Colors wrong:** Ensure `Framework_Status` values are exactly `Activated`, `Endorsed`, or `In development` (use dropdown).
+- **Colors wrong:** Ensure status values are exactly `Activated`, `Endorsed`, or `In development` (use dropdown). The map color is driven by `Status_1`.
 - **Sheet not updating:** Make sure the sheet is published to web (File → Share → Publish to web).
 - **ISO column or Ref sheet missing:** These are hidden by design. Right-click on column headers or sheet tabs to unhide if needed for maintenance.
 - **New crisis type needs icon:** Add the crisis name to the dropdown, then add a matching condition to the tooltip template in Datawrapper.
